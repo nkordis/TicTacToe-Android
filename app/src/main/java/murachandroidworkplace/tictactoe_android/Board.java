@@ -10,7 +10,7 @@ public class Board {
     public static final int COLS = 3;
 
     // package access
-    Cell[][] cells;  // a board composes of ROWS-by-COLS Cell instances
+    public Cell[][] cells;  // a board composes of ROWS-by-COLS Cell instances
     int currentRow, currentCol;  // the current seed's row and column
 
     /** Constructor to initialize the game board */
@@ -83,4 +83,17 @@ public class Board {
         }
     }
 
+    public boolean firstMove() {
+        boolean ret = true;
+
+
+        for (int row = 0; row < ROWS; ++row)
+            for (int col = 0; col < COLS; ++col)
+                if(cells[row][col].content != Seed.EMPTY){
+                    ret = false;
+                }
+
+
+        return ret;
+    }
 }

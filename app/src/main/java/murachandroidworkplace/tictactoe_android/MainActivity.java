@@ -13,6 +13,11 @@ import android.widget.TextView;
 
 import java.util.Random;
 
+import murachandroidworkplace.tictactoe_android.AI.AIPlayer;
+import murachandroidworkplace.tictactoe_android.AI.AIPlayerMinimax;
+import murachandroidworkplace.tictactoe_android.AI.AIPlayerRandom;
+import murachandroidworkplace.tictactoe_android.AI.AIPlayerTableLookup;
+
 
 public class MainActivity extends ActionBarActivity {
 
@@ -33,11 +38,13 @@ public class MainActivity extends ActionBarActivity {
 
     // define variables for the game
     private GameOptions gameOption;
-    private  Board board;            // the game board
-    private GameState currentState; // the current state of the game (of enum GameState)
-    private Seed currentPlayer;     // the current player (of enum Seed)
+    private  Board board;
+    private GameState currentState;
+    private Seed currentPlayer;
+    private AIPlayer computer;
 
     public static final int ROWS = 3, COLS = 3; // number of rows and columns
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,11 +186,10 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        gameOption = GameOptions.HUMANvsHUMAN;
+        gameOption = GameOptions.COMPUTERvsHUMAN;
         board = new Board();// allocate game-board
 
-        // Initialize the game-board and current status
-      //  initGame();
+
     }
 
     private void clearGuiButtons() {
@@ -222,10 +228,7 @@ public class MainActivity extends ActionBarActivity {
             message.setText("It's Draw!");
 
         }else{
-           /* if(gameOption == GameOptions.HUMANvsHUMAN || gameOption == GameOptions.HUMANvsCOMPUTER)
-                playerMove(this.currentPlayer);
-            if(gameOption == GameOptions.COMPUTERvsHUMAN || gameOption == GameOptions.HUMANvsCOMPUTER )
-                computerMove();*/
+
             if(gameOption == GameOptions.HUMANvsHUMAN){playerMove(this.currentPlayer);}
             else if((gameOption == GameOptions.HUMANvsCOMPUTER && this.currentPlayer == Seed.CROSS) || (gameOption == GameOptions.COMPUTERvsHUMAN && this.currentPlayer == Seed.NOUGHT))
             {playerMove(this.currentPlayer);}else {computerMove();}
@@ -236,9 +239,11 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void computerMove() {
-        if(currentState == GameState.PLAYING){
-            int row;
-            int col;
+        int row;
+        int col;
+
+        if(board.firstMove()){ // if this the first move play it randomly.
+
             Random r = new Random();
             do {
 
@@ -247,51 +252,35 @@ public class MainActivity extends ActionBarActivity {
 
 
             }while(board.cells[row][col].content!= Seed.EMPTY);
-
-            // board[row][col] = currentPlayer;
-
-            board.currentRow = row;
-            board.currentCol = col;
-            board.cells[row][col].content = currentPlayer;
-            switch(row){
-                case 0: switch(col){
-                    case 0: button1.setText(board.cells[row][col].paint()); break;
-                    case 1: button2.setText(board.cells[row][col].paint());  break;
-                    case 2: button3.setText(board.cells[row][col].paint());}  break;
-                case 1:switch(col){
-                    case 0: button4.setText(board.cells[row][col].paint());   break;
-                    case 1: button5.setText(board.cells[row][col].paint());    break;
-                    case 2: button6.setText(board.cells[row][col].paint());}    break;
-                case 2:switch(col){
-                    case 0: button7.setText(board.cells[row][col].paint());  break;
-                    case 1: button8.setText(board.cells[row][col].paint());  break;
-                    case 2: button9.setText(board.cells[row][col].paint());}  break;
-
-            }
-
-         /*   if (board.hasWon(currentPlayer)) {  // check for win
-                currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
-            } else if (board.isDraw()) {  // check for draw
-                currentState = GameState.DRAW;
-            }
-            // Otherwise, no change to current state (still GameState.PLAYING).
-
-            // Switch player
-            else
-            {this.currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;}
-
-            if (currentState == GameState.CROSS_WON) {
-                message.setText("'X' won! Press 'New Game' to play again");
-            } else if (currentState == GameState.NOUGHT_WON) {
-                message.setText("'O' won!");
-            } else if (currentState == GameState.DRAW) {
-                message.setText("It's Draw! Bye!");
-
-            }*/ updateGame(currentPlayer);
-
-
+        }else{
+            computer.setSeed(currentPlayer);
+            int [] receive = computer.move();
+            row = receive[0];
+            col = receive[1];
+        }
+        board.currentRow = row;
+        board.currentCol = col;
+        board.cells[row][col].content = currentPlayer;
+        switch(row){
+            case 0: switch(col){
+                case 0: button1.setText(board.cells[row][col].paint()); break;
+                case 1: button2.setText(board.cells[row][col].paint());  break;
+                case 2: button3.setText(board.cells[row][col].paint());}  break;
+            case 1:switch(col){
+                case 0: button4.setText(board.cells[row][col].paint());   break;
+                case 1: button5.setText(board.cells[row][col].paint());    break;
+                case 2: button6.setText(board.cells[row][col].paint());}    break;
+            case 2:switch(col){
+                case 0: button7.setText(board.cells[row][col].paint());  break;
+                case 1: button8.setText(board.cells[row][col].paint());  break;
+                case 2: button9.setText(board.cells[row][col].paint());}  break;
 
         }
+
+        updateGame(currentPlayer);
+
+
+
 
 
 
@@ -299,11 +288,9 @@ public class MainActivity extends ActionBarActivity {
 
     private void playerMove(Seed currentPlayer) {
         if (currentPlayer == Seed.CROSS && currentState == GameState.PLAYING) {
-          //  System.out.print("Player 'X', enter your move (row[1-3] column[1-3]): ");
-            message.setText("Player 'X', enter your move ");
+          message.setText("Player 'X', enter your move ");
         } else if(currentPlayer == Seed.NOUGHT && currentState == GameState.PLAYING){
-         //   System.out.print("Player 'O', enter your move (row[1-3] column[1-3]): ");
-            message.setText("Player 'O', enter your move ");
+          message.setText("Player 'O', enter your move ");
         }
     }
 
@@ -325,6 +312,9 @@ public class MainActivity extends ActionBarActivity {
         board.init();  // clear the board contents
         currentPlayer = Seed.CROSS;       // CROSS plays first
         currentState = GameState.PLAYING; // ready to play
+       // computer = new AIPlayerRandom(board);
+       // computer = new AIPlayerTableLookup(board);
+         computer = new AIPlayerMinimax(board);
     }
 
 
