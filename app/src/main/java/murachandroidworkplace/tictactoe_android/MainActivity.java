@@ -8,6 +8,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -45,15 +48,20 @@ public class MainActivity extends ActionBarActivity {
 
     public static final int ROWS = 3, COLS = 3; // number of rows and columns
 
+    final Animation animation = new AlphaAnimation(1, 0); // Change alpha from fully visible to invisible
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         // get references to the widgets
         message = (TextView)findViewById(R.id.textView);
-        button1 = (Button)findViewById(R.id.button1);
+        button1 = (Button)findViewById(R.id.button1); //button1.startAnimation(animation);
         button2 = (Button)findViewById(R.id.button2);
         button3 = (Button)findViewById(R.id.button3);
         button4 = (Button)findViewById(R.id.button4);
@@ -72,6 +80,7 @@ public class MainActivity extends ActionBarActivity {
               if(checkMove(0,0)) {
                   button1.setText(board.cells[0][0].paint());
                   updateGame(currentPlayer);
+                //  button1.startAnimation(animation);
               }
             }
         });
@@ -160,6 +169,7 @@ public class MainActivity extends ActionBarActivity {
                 if(checkMove(2,2)) {
                     button9.setText(board.cells[2][2].paint());
                     updateGame(currentPlayer);
+                  //  button1.clearAnimation();
                 }
             }
         });
@@ -170,6 +180,7 @@ public class MainActivity extends ActionBarActivity {
                 Log.i(TAG, "Button New Game pressed");
                 clearGuiButtons();
                 message.setTextColor(Color.WHITE);
+              //  animation.cancel();
                 initGame();
 
                 if(gameOption == GameOptions.HUMANvsHUMAN || gameOption == GameOptions.HUMANvsCOMPUTER)
@@ -193,20 +204,21 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void clearGuiButtons() {
-        button1.setText("");
-        button2.setText("");
-        button3.setText("");
-        button4.setText("");
-        button5.setText("");
-        button6.setText("");
-        button7.setText("");
-        button8.setText("");
-        button9.setText("");
+        button1.clearAnimation(); button1.setText("");
+        button2.clearAnimation(); button2.setText("");
+        button3.clearAnimation(); button3.setText("");
+        button4.clearAnimation(); button4.setText("");
+        button5.clearAnimation(); button5.setText("");
+        button6.clearAnimation(); button6.setText("");
+        button7.clearAnimation(); button7.setText("");
+        button8.clearAnimation(); button8.setText("");
+        button9.clearAnimation(); button9.setText("");
     }
 
     private void updateGame(Seed currentPlayer) {
         if (board.hasWon(currentPlayer)) {  // check for win
             currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
+
         } else if (board.isDraw()) {  // check for draw
             currentState = GameState.DRAW;
         }
@@ -220,9 +232,11 @@ public class MainActivity extends ActionBarActivity {
 
             message.setTextColor(Color.RED);
             message.setText("'X' won!");
+            animateWinningButtons();
         } else if (currentState == GameState.NOUGHT_WON) {
             message.setTextColor(Color.RED);
             message.setText("'O' won!");
+            animateWinningButtons();
         } else if (currentState == GameState.DRAW) {
             message.setTextColor(Color.RED);
             message.setText("It's Draw!");
@@ -236,6 +250,50 @@ public class MainActivity extends ActionBarActivity {
 
         }
 
+    }
+
+    private void animateWinningButtons() {
+
+        animation.setDuration(500); // duration - half a second
+        animation.setInterpolator(new LinearInterpolator()); // do not alter animation rate
+        //animation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
+        animation.setRepeatCount(5); // Repeat animation infinitely
+        animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end so the button will fade back in
+
+        int [] winButtons;
+         winButtons = board.getWinningButtons(currentPlayer);
+        for(int i = 0; i < 3; i++) {
+            switch (winButtons[i]) {
+                case 1:
+                    button1.startAnimation(animation);
+                    break;
+                case 2:
+                    button2.startAnimation(animation);
+                    break;
+                case 3:
+                    button3.startAnimation(animation);
+                    break;
+                case 4:
+                    button4.startAnimation(animation);
+                    break;
+                case 5:
+                    button5.startAnimation(animation);
+                    break;
+                case 6:
+                    button6.startAnimation(animation);
+                    break;
+                case 7:
+                    button7.startAnimation(animation);
+                    break;
+                case 8:
+                    button8.startAnimation(animation);
+                    break;
+                case 9:
+                    button9.startAnimation(animation);
+                    break;
+            }
+
+        }
     }
 
     private void computerMove() {

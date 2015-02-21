@@ -62,11 +62,41 @@ public class Board {
                 && cells[0][2].content == theSeed
                 && cells[1][1].content == theSeed
                 && cells[2][0].content == theSeed);
-        System.out.println(ret);
-        System.out.println(currentCol);
-        System.out.println(cells[0][currentCol].paint()+" "+cells[1][currentCol].paint()+" "+cells[2][currentCol].paint());
+
         return ret;
 
+    }
+
+    public int[] getWinningButtons(Seed theSeed){
+        int [] winButtons = new int[3];
+
+        if(cells[currentRow][0].content == theSeed         // 3-in-the-row
+           && cells[currentRow][1].content == theSeed
+           && cells[currentRow][2].content == theSeed){
+            winButtons[0] = 1; winButtons[1] = 2; winButtons[2] = 3;
+            switch (currentRow){
+                 case 0: winButtons[0] = 1; winButtons[1] = 2; winButtons[2] = 3;break;
+                 case 1: winButtons[0] = 4; winButtons[1] = 5; winButtons[2] = 6;break;
+                 case 2: winButtons[0] = 7; winButtons[1] = 8; winButtons[2] = 9;break;
+             }
+        }else if(cells[0][currentCol].content == theSeed      // 3-in-the-column
+                && cells[1][currentCol].content == theSeed
+                && cells[2][currentCol].content == theSeed){
+
+            switch (currentCol){
+                case 0: winButtons[0] = 1; winButtons[1] = 4; winButtons[2] = 7;break;
+                case 1: winButtons[0] = 2; winButtons[1] = 5; winButtons[2] = 8;break;
+                case 2: winButtons[0] = 3; winButtons[1] = 6; winButtons[2] = 9;break;
+            }
+        }else if(currentRow == currentCol){
+              winButtons[0] = 1; winButtons[1] = 5; winButtons[2] = 9;
+        }else if(currentRow + currentCol == 2){
+              winButtons[0] = 3; winButtons[1] = 5; winButtons[2] = 7;
+        }
+
+
+
+        return winButtons;
     }
 
     /** Paint itself */
