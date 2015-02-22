@@ -57,7 +57,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        gameOption = GameOptions.COMPUTERvsHUMAN;
+        gameOption = GameOptions.HUMANvsHUMAN;
 
         // get references to the widgets
         message = (TextView)findViewById(R.id.textView);
