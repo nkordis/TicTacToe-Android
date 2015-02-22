@@ -25,6 +25,12 @@ public class MainActivity extends ActionBarActivity {
 
     static private final String TAG = "TicTacToe";
 
+    // final constants for the sound files
+    private final int WIN = 1;
+    private final int DRAW = 2;
+    private final int MOVE = 3;
+    private final int NEW_GAME = 4;
+
     // define variables for the widgets
     private TextView message;
     private Button button1;
@@ -57,11 +63,11 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        gameOption = GameOptions.HUMANvsHUMAN;
+        gameOption = GameOptions.COMPUTERvsHUMAN;
 
         // get references to the widgets
         message = (TextView)findViewById(R.id.textView);
-        button1 = (Button)findViewById(R.id.button1); //button1.startAnimation(animation);
+        button1 = (Button)findViewById(R.id.button1);
         button2 = (Button)findViewById(R.id.button2);
         button3 = (Button)findViewById(R.id.button3);
         button4 = (Button)findViewById(R.id.button4);
@@ -169,8 +175,7 @@ public class MainActivity extends ActionBarActivity {
                 if(checkMove(2,2)) {
                     button9.setText(board.cells[2][2].paint());
                     updateGame(currentPlayer);
-                  //  button1.clearAnimation();
-                }
+                  }
             }
         });
 
@@ -184,7 +189,6 @@ public class MainActivity extends ActionBarActivity {
                 if(gameOption == GameOptions.HUMANvsHUMAN || gameOption == GameOptions.HUMANvsCOMPUTER)
                     playerMove(currentPlayer); // update the content, currentRow and currentCol
                 if(gameOption == GameOptions.COMPUTERvsHUMAN || gameOption == GameOptions.COMPUTERvsCOMPUTER){
-
                     computerMove();
                 }
                 if(gameOption == GameOptions.COMPUTERvsCOMPUTER){
@@ -220,41 +224,48 @@ public class MainActivity extends ActionBarActivity {
 
     private void updateGame(Seed currentPlayer) {
         if (board.hasWon(currentPlayer)) {  // check for win
-            currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
-            if(player!=null){player.release();}
-            player=MediaPlayer.create(MainActivity.this,R.raw.winn);
-            player.start();
-            message.setTextColor(getResources().getColor(R.color.goldenGreen));
 
-            if (currentState == GameState.CROSS_WON) {
-                message.setText("'X' won!");
-            } else if (currentState == GameState.NOUGHT_WON) {
-                message.setText("'O' won!");
-            }
+            currentState = (currentPlayer == Seed.CROSS)? GameState.CROSS_WON:GameState.NOUGHT_WON;
+            String winText = (currentPlayer == Seed.CROSS)? "'X' won!":"'O' won!";
+            message.setTextColor(getResources().getColor(R.color.goldenGreen));
+            message.setText(winText);
+
             animateWinningButtons();
 
+            playSound(WIN);
+
         } else if (board.isDraw()) {  // check for draw
-            if(player!=null){player.release();}
-            player=MediaPlayer.create(MainActivity.this,R.raw.draw);
-            player.start();
+
             currentState = GameState.DRAW;
             message.setTextColor(getResources().getColor(R.color.goldenGreen));
             message.setText("It's Draw!");
+            playSound(DRAW);
 
-        }else{
+         }else {
 
+            playSound(MOVE);
             this.currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-            if(player!=null){player.release();}
-            player=MediaPlayer.create(MainActivity.this,R.raw.move);
-            player.start();
 
-            if(gameOption == GameOptions.HUMANvsHUMAN){playerMove(this.currentPlayer);}
-            else if((gameOption == GameOptions.HUMANvsCOMPUTER && this.currentPlayer == Seed.CROSS) || (gameOption == GameOptions.COMPUTERvsHUMAN && this.currentPlayer == Seed.NOUGHT))
-            {playerMove(this.currentPlayer);}else {computerMove();}
-
-
+            if (gameOption == GameOptions.HUMANvsHUMAN) {
+                playerMove(this.currentPlayer);
+            } else if ((gameOption == GameOptions.HUMANvsCOMPUTER && this.currentPlayer == Seed.CROSS)
+                    || (gameOption == GameOptions.COMPUTERvsHUMAN && this.currentPlayer == Seed.NOUGHT)) {
+                playerMove(this.currentPlayer);
+            } else {
+                computerMove();
+            }
         }
+    }
 
+    private void playSound(int soundFile) {
+        if(player!=null){player.release();}
+        switch (soundFile){
+            case 1: player=MediaPlayer.create(MainActivity.this,R.raw.win);break;
+            case 2: player=MediaPlayer.create(MainActivity.this,R.raw.draw);break;
+            case 3: player=MediaPlayer.create(MainActivity.this,R.raw.move);break;
+            case 4: player=MediaPlayer.create(MainActivity.this,R.raw.new_game);break;
+        }
+        player.start();
     }
 
     private void animateWinningButtons() {
@@ -341,12 +352,6 @@ public class MainActivity extends ActionBarActivity {
         }
 
         updateGame(currentPlayer);
-
-
-
-
-
-
     }
 
     private void playerMove(Seed currentPlayer) {
@@ -383,9 +388,7 @@ public class MainActivity extends ActionBarActivity {
        // computer = new AIPlayerTableLookup(board);
          computer = new AIPlayerMinimax(board);
 
-        if(player!=null){player.release();}
-        player=MediaPlayer.create(MainActivity.this,R.raw.new_game);
-        player.start();
+        playSound(NEW_GAME);
 
         try {  // sleep for 1 sec in order to play the new_game sound
             Thread.sleep(1000);
