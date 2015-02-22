@@ -1,6 +1,7 @@
 package murachandroidworkplace.tictactoe_android;
 
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,8 +19,6 @@ import java.util.Random;
 
 import murachandroidworkplace.tictactoe_android.AI.AIPlayer;
 import murachandroidworkplace.tictactoe_android.AI.AIPlayerMinimax;
-import murachandroidworkplace.tictactoe_android.AI.AIPlayerRandom;
-import murachandroidworkplace.tictactoe_android.AI.AIPlayerTableLookup;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -49,6 +48,7 @@ public class MainActivity extends ActionBarActivity {
     public static final int ROWS = 3, COLS = 3; // number of rows and columns
 
     final Animation animation = new AlphaAnimation(1, 0); // Change alpha from fully visible to invisible
+    MediaPlayer player;
 
 
 
@@ -57,7 +57,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+        gameOption = GameOptions.COMPUTERvsHUMAN;
 
         // get references to the widgets
         message = (TextView)findViewById(R.id.textView);
@@ -178,30 +178,33 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "Button New Game pressed");
-                clearGuiButtons();
-                message.setTextColor(Color.WHITE);
-              //  animation.cancel();
+
                 initGame();
 
                 if(gameOption == GameOptions.HUMANvsHUMAN || gameOption == GameOptions.HUMANvsCOMPUTER)
                     playerMove(currentPlayer); // update the content, currentRow and currentCol
-                if(gameOption == GameOptions.COMPUTERvsHUMAN /*|| gameOption == GameOptions.HUMANvsCOMPUTER */ || gameOption == GameOptions.COMPUTERvsCOMPUTER)
+                if(gameOption == GameOptions.COMPUTERvsHUMAN || gameOption == GameOptions.COMPUTERvsCOMPUTER){
+
                     computerMove();
+                }
                 if(gameOption == GameOptions.COMPUTERvsCOMPUTER){
 
                     while(currentState == GameState.PLAYING){
+
                         computerMove();
                         updateGame(currentPlayer);
                     }
                 }
+
             }
         });
 
-        gameOption = GameOptions.COMPUTERvsHUMAN;
-        board = new Board();// allocate game-board
+
 
 
     }
+
+
 
     private void clearGuiButtons() {
         button1.clearAnimation(); button1.setText("");
@@ -218,30 +221,32 @@ public class MainActivity extends ActionBarActivity {
     private void updateGame(Seed currentPlayer) {
         if (board.hasWon(currentPlayer)) {  // check for win
             currentState = (currentPlayer == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
+            if(player!=null){player.release();}
+            player=MediaPlayer.create(MainActivity.this,R.raw.winn);
+            player.start();
+            message.setTextColor(getResources().getColor(R.color.goldenGreen));
+
+            if (currentState == GameState.CROSS_WON) {
+                message.setText("'X' won!");
+            } else if (currentState == GameState.NOUGHT_WON) {
+                message.setText("'O' won!");
+            }
+            animateWinningButtons();
 
         } else if (board.isDraw()) {  // check for draw
+            if(player!=null){player.release();}
+            player=MediaPlayer.create(MainActivity.this,R.raw.draw);
+            player.start();
             currentState = GameState.DRAW;
-        }
-        // Otherwise, no change to current state (still GameState.PLAYING).
-
-        // Switch player
-        else
-        {this.currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;}
-
-        if (currentState == GameState.CROSS_WON) {
-
-            message.setTextColor(Color.RED);
-            message.setText("'X' won!");
-            animateWinningButtons();
-        } else if (currentState == GameState.NOUGHT_WON) {
-            message.setTextColor(Color.RED);
-            message.setText("'O' won!");
-            animateWinningButtons();
-        } else if (currentState == GameState.DRAW) {
-            message.setTextColor(Color.RED);
+            message.setTextColor(getResources().getColor(R.color.goldenGreen));
             message.setText("It's Draw!");
 
         }else{
+
+            this.currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+            if(player!=null){player.release();}
+            player=MediaPlayer.create(MainActivity.this,R.raw.move);
+            player.start();
 
             if(gameOption == GameOptions.HUMANvsHUMAN){playerMove(this.currentPlayer);}
             else if((gameOption == GameOptions.HUMANvsCOMPUTER && this.currentPlayer == Seed.CROSS) || (gameOption == GameOptions.COMPUTERvsHUMAN && this.currentPlayer == Seed.NOUGHT))
@@ -367,13 +372,30 @@ public class MainActivity extends ActionBarActivity {
 
 
     private void initGame() {
+
+        clearGuiButtons();
+        board = new Board();// allocate game-board
         board.init();  // clear the board contents
+        message.setTextColor(Color.WHITE);
         currentPlayer = Seed.CROSS;       // CROSS plays first
         currentState = GameState.PLAYING; // ready to play
        // computer = new AIPlayerRandom(board);
        // computer = new AIPlayerTableLookup(board);
          computer = new AIPlayerMinimax(board);
-    }
+
+        if(player!=null){player.release();}
+        player=MediaPlayer.create(MainActivity.this,R.raw.new_game);
+        player.start();
+
+        try {  // sleep for 1 sec in order to play the new_game sound
+            Thread.sleep(1000);
+        } catch(InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+
+        }
+
+
 
 
     @Override
