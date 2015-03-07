@@ -88,7 +88,9 @@ public class Board {
                 case 1: winButtons[0] = 2; winButtons[1] = 5; winButtons[2] = 8;break;
                 case 2: winButtons[0] = 3; winButtons[1] = 6; winButtons[2] = 9;break;
             }
-        }else if(cells[0][0].content == theSeed){
+        }else if(cells[0][0].content == theSeed
+                && cells[1][1].content == theSeed
+                && cells[2][2].content == theSeed){
               winButtons[0] = 1; winButtons[1] = 5; winButtons[2] = 9;
         }else{
               winButtons[0] = 3; winButtons[1] = 5; winButtons[2] = 7;
