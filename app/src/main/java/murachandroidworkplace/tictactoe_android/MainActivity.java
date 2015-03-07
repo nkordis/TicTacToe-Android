@@ -63,6 +63,9 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        currentState = GameState.WAIT;
+        board = new Board();// allocate game-board
+        board.init();  // clear the board contents
         gameOption = GameOptions.COMPUTERvsHUMAN;
 
         // get references to the widgets

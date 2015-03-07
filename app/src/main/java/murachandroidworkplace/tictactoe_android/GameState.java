@@ -8,5 +8,5 @@ package murachandroidworkplace.tictactoe_android;
  *  Enumerations for the various states of the game
  */
 public enum GameState {
-    PLAYING, DRAW, CROSS_WON, NOUGHT_WON
+    PLAYING, DRAW, CROSS_WON, WAIT, NOUGHT_WON
 }
