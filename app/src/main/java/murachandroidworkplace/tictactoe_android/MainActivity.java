@@ -1,7 +1,12 @@
 package murachandroidworkplace.tictactoe_android;
 
+import android.app.Dialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,22 +19,29 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
-
 import java.util.Random;
 
 import murachandroidworkplace.tictactoe_android.AI.AIPlayer;
 import murachandroidworkplace.tictactoe_android.AI.AIPlayerMinimax;
+import murachandroidworkplace.tictactoe_android.AI.AIPlayerRandom;
+import murachandroidworkplace.tictactoe_android.AI.AIPlayerTableLookup;
 
 
 public class MainActivity extends ActionBarActivity {
 
     static private final String TAG = "TicTacToe";
+    static private final String URL = "http://en.wikipedia.org/wiki/Tic-tac-toe";
 
     // final constants for the sound files
     private final int WIN = 1;
     private final int DRAW = 2;
     private final int MOVE = 3;
     private final int NEW_GAME = 4;
+
+    //final constants for the game level
+    private final int LEVEL_EASY = 0;
+    private final int LEVEL_MEDIUM = 1;
+    private final int LEVEL_ADVANCED = 2;
 
     // define variables for the widgets
     private TextView message;
@@ -45,17 +57,22 @@ public class MainActivity extends ActionBarActivity {
     private Button buttonNewGame;
 
     // define variables for the game
-    private GameOptions gameOption;
-    private  Board board;
+    private Board board;
     private GameState currentState;
     private Seed currentPlayer;
+
+    // set up preferences
+    private SharedPreferences prefs;
+    private GameOptions gameOption;
     private AIPlayer computer;
+    private boolean computerPlaysFirst;
+    private int level;
+
 
     public static final int ROWS = 3, COLS = 3; // number of rows and columns
 
     final Animation animation = new AlphaAnimation(1, 0); // Change alpha from fully visible to invisible
     MediaPlayer player;
-
 
 
     @Override
@@ -67,38 +84,37 @@ public class MainActivity extends ActionBarActivity {
         board = new Board();// allocate game-board
         board.init();  // clear the board contents
         gameOption = GameOptions.COMPUTERvsHUMAN;
-
+        // computer = new AIPlayerMinimax(board);
+        computerPlaysFirst = true;
+        level = LEVEL_EASY;
         // get references to the widgets
-        message = (TextView)findViewById(R.id.textView);
-        button1 = (Button)findViewById(R.id.button1);
-        button2 = (Button)findViewById(R.id.button2);
-        button3 = (Button)findViewById(R.id.button3);
-        button4 = (Button)findViewById(R.id.button4);
-        button5 = (Button)findViewById(R.id.button5);
-        button6 = (Button)findViewById(R.id.button6);
-        button7 = (Button)findViewById(R.id.button7);
-        button8 = (Button)findViewById(R.id.button8);
-        button9 = (Button)findViewById(R.id.button9);
-        buttonNewGame = (Button)findViewById(R.id.buttonNewGame);
+        message = (TextView) findViewById(R.id.textView);
+        button1 = (Button) findViewById(R.id.button1);
+        button2 = (Button) findViewById(R.id.button2);
+        button3 = (Button) findViewById(R.id.button3);
+        button4 = (Button) findViewById(R.id.button4);
+        button5 = (Button) findViewById(R.id.button5);
+        button6 = (Button) findViewById(R.id.button6);
+        button7 = (Button) findViewById(R.id.button7);
+        button8 = (Button) findViewById(R.id.button8);
+        button9 = (Button) findViewById(R.id.button9);
+        buttonNewGame = (Button) findViewById(R.id.buttonNewGame);
 
         // set the listeners
         button1.setOnClickListener(new OnClickListener() {
             @Override
-            public void onClick(View v) {
-                Log.i(TAG, "Button 1 pressed");
-              if(checkMove(0,0)) {
-                  button1.setText(board.cells[0][0].paint());
-                  updateGame(currentPlayer);
-                //  button1.startAnimation(animation);
-              }
+            public void onClick(View v){
+                if(checkMove(0, 0)) {
+                    button1.setText(board.cells[0][0].paint());
+                    updateGame(currentPlayer);
+                    }
             }
         });
 
         button2.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 2 pressed");
-                if(checkMove(0,1)) {
+                if (checkMove(0, 1)) {
                     button2.setText(board.cells[0][1].paint());
                     updateGame(currentPlayer);
                 }
@@ -108,8 +124,7 @@ public class MainActivity extends ActionBarActivity {
         button3.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 3 pressed");
-                if(checkMove(0,2)) {
+                if (checkMove(0, 2)) {
                     button3.setText(board.cells[0][2].paint());
                     updateGame(currentPlayer);
                 }
@@ -119,8 +134,7 @@ public class MainActivity extends ActionBarActivity {
         button4.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 4 pressed");
-                if(checkMove(1,0)) {
+                if (checkMove(1, 0)) {
                     button4.setText(board.cells[1][0].paint());
                     updateGame(currentPlayer);
                 }
@@ -130,8 +144,7 @@ public class MainActivity extends ActionBarActivity {
         button5.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 5 pressed");
-                if(checkMove(1,1)) {
+                if (checkMove(1, 1)) {
                     button5.setText(board.cells[1][1].paint());
                     updateGame(currentPlayer);
                 }
@@ -141,8 +154,7 @@ public class MainActivity extends ActionBarActivity {
         button6.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 6 pressed");
-                if(checkMove(1,2)) {
+                if (checkMove(1, 2)) {
                     button6.setText(board.cells[1][2].paint());
                     updateGame(currentPlayer);
                 }
@@ -152,8 +164,7 @@ public class MainActivity extends ActionBarActivity {
         button7.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 7 pressed");
-                if(checkMove(2,0)) {
+                if (checkMove(2, 0)) {
                     button7.setText(board.cells[2][0].paint());
                     updateGame(currentPlayer);
                 }
@@ -163,8 +174,7 @@ public class MainActivity extends ActionBarActivity {
         button8.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 8 pressed");
-                if(checkMove(2,1)) {
+                if (checkMove(2, 1)) {
                     button8.setText(board.cells[2][1].paint());
                     updateGame(currentPlayer);
                 }
@@ -174,41 +184,42 @@ public class MainActivity extends ActionBarActivity {
         button9.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button 9 pressed");
-                if(checkMove(2,2)) {
+                if (checkMove(2, 2)) {
                     button9.setText(board.cells[2][2].paint());
                     updateGame(currentPlayer);
-                  }
+                }
             }
         });
 
         buttonNewGame.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "Button New Game pressed");
-
                 initGame();
 
-                if(gameOption == GameOptions.HUMANvsHUMAN || gameOption == GameOptions.HUMANvsCOMPUTER)
-                    playerMove(currentPlayer); // update the content, currentRow and currentCol
-                if(gameOption == GameOptions.COMPUTERvsHUMAN || gameOption == GameOptions.COMPUTERvsCOMPUTER){
+                if (computerPlaysFirst) {
                     computerMove();
+                } else {
+                    playerMove(currentPlayer);
                 }
-                if(gameOption == GameOptions.COMPUTERvsCOMPUTER){
-
-                    while(currentState == GameState.PLAYING){
-
-                        computerMove();
-                        updateGame(currentPlayer);
-                    }
-                }
-
             }
         });
 
+        // set the default values for the preferences
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+        // get default SharedPreferences object
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
 
+    }
 
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        computerPlaysFirst = prefs.getBoolean("first_move", true);
+        level = Integer.parseInt(prefs.getString("computer_level","0"));
     }
 
 
@@ -241,7 +252,7 @@ public class MainActivity extends ActionBarActivity {
 
             currentState = GameState.DRAW;
             message.setTextColor(getResources().getColor(R.color.goldenGreen));
-            message.setText("It's Draw!");
+            message.setText("It's a Draw!");
             playSound(DRAW);
 
          }else {
@@ -249,14 +260,11 @@ public class MainActivity extends ActionBarActivity {
             playSound(MOVE);
             this.currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 
-            if (gameOption == GameOptions.HUMANvsHUMAN) {
-                playerMove(this.currentPlayer);
-            } else if ((gameOption == GameOptions.HUMANvsCOMPUTER && this.currentPlayer == Seed.CROSS)
-                    || (gameOption == GameOptions.COMPUTERvsHUMAN && this.currentPlayer == Seed.NOUGHT)) {
-                playerMove(this.currentPlayer);
-            } else {
+            if((computerPlaysFirst && this.currentPlayer == Seed.CROSS) || (!computerPlaysFirst && this.currentPlayer == Seed.NOUGHT))
                 computerMove();
-            }
+            else
+                playerMove(this.currentPlayer);
+
         }
     }
 
@@ -268,7 +276,9 @@ public class MainActivity extends ActionBarActivity {
             case 3: player=MediaPlayer.create(MainActivity.this,R.raw.move);break;
             case 4: player=MediaPlayer.create(MainActivity.this,R.raw.new_game);break;
         }
-        player.start();
+        if (player != null) {
+            player.start();
+        }
     }
 
     private void animateWinningButtons() {
@@ -387,9 +397,12 @@ public class MainActivity extends ActionBarActivity {
         message.setTextColor(Color.WHITE);
         currentPlayer = Seed.CROSS;       // CROSS plays first
         currentState = GameState.PLAYING; // ready to play
-       // computer = new AIPlayerRandom(board);
-       // computer = new AIPlayerTableLookup(board);
-         computer = new AIPlayerMinimax(board);
+        if(level == LEVEL_EASY)
+        {computer = new AIPlayerRandom(board);}
+        else if(level == LEVEL_MEDIUM)
+        {computer = new AIPlayerTableLookup(board);}
+        else if(level == LEVEL_ADVANCED)
+        {computer = new AIPlayerMinimax(board);}
 
         playSound(NEW_GAME);
 
@@ -420,6 +433,31 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
+            return true;
+        }
+
+        if(id == R.id.action_help){
+            Uri webPage = Uri.parse(URL);
+            Intent baseIntent = new Intent(Intent.ACTION_VIEW, webPage);
+            startActivity(baseIntent);
+            return true;
+        }
+
+        if(id == R.id.action_about){
+
+            final Dialog dialog = new Dialog(this);
+            dialog.setContentView(R.layout.dialog);
+            dialog.setTitle(R.string.about_text_title);
+
+            Button okButton = (Button)dialog.findViewById(R.id.ok_about_button);
+            okButton.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+            dialog.show();
             return true;
         }
 
